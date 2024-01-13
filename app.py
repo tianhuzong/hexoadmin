@@ -1,14 +1,14 @@
 from flask import Flask
 from loguru import logger
 import subprocess
-import time
+import datetime
 import os
 import yaml
 app = Flask(__name__)
 
 # function tools 一些函数工具
 def gettime():
-    return time.strftime("%Y/%m/%d %H:%M:%S", time.localtime())
+    return  datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 def get_middle_text(text, start_marker, end_marker):
     """
     取出文本中间
@@ -106,15 +106,7 @@ def jiexitext_myself(path):
     jiexires["body"] = body
     return jiexires
 
-'''分割符号匹配检索'''
-def pattern_search(string,pattern):
-    index=0
-    while index<len(string)-len(pattern):
-        index=string.find(pattern,index,len(string))
-        if index==-1:
-            break
-        yield index
-        index+=len(pattern)-1
+
 
 """
 版权声明：本文为CSDN博主「xiejava1018」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。
@@ -132,9 +124,10 @@ def jiexitext(blog_md_file):
     if len(pattern_list)>=2:
         blog_info_str=md_f_str[pattern_list[0]+len(pattern):pattern_list[1]]
         blog_data=yaml.load(blog_info_str,Loader=yaml.SafeLoader)
-        blog_data['content']=md_f_str[pattern_list[1]+len(pattern):]
+        
+        content = md_f_str[pattern_list[1]+len(pattern):]
     md_f.close()
-    return blog_data
+    return blog_data,content
 
 
 def pattern_search(string,pattern):
@@ -146,9 +139,29 @@ def pattern_search(string,pattern):
             break
         yield index
         index+=len(pattern)-1
+
+def dict_to_md(blog_data, content):
+    # 获取原始 Markdown 内容  
+    original_md_content = content
+    blog = dict(blog_data)
+    # 将 date 字段的值转换为特定格式的字符串
+    if 'date' in blog:
+        blog['date'] = blog['date'].strftime('%Y-%m-%d %H:%M:%S')
+
+    # 将 YAML 数据重新转换为字符串  
+    yaml_str = yaml.dump(blog, default_flow_style=False, allow_unicode=True)
+      
+    # 合并原始 Markdown 内容和转换后的 YAML 字符串，并在它们之间插入两个“---”  
+    reversed_content = f'---\n{yaml_str}\n---\n{original_md_content}'
+    return reversed_content
+
 def update_page(path,text_content):
     """
     更新文章内容，不需要编写文章头部内容
-    :path 文章目录
+    :param path 文章目录
+    :param text_content
     """
+    jiexi = jiexitext(path)
+    
+
     pass   
