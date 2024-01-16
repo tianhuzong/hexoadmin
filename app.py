@@ -47,7 +47,7 @@ def createpage():
         return json.dumps({"code" : 404,"msg":"配置文件不存在，请进行初始化"})
     """
     # TODO 把下面这一行删掉
-    """
+    
     configs["path"] = "/workspace/cloud-studio-python-demo/testcli"
     if content == None: 
         content = ""
@@ -55,6 +55,6 @@ def createpage():
     if res == "Successd":
         return json.dumps({"code":200,"msg":"文章创建成功"})
     else: return json.dumps({"code":500,"msg":res})
-    """
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0",port="5000")

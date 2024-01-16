@@ -40,6 +40,7 @@ def create_page(path:str,title:str, tags:list, categories:list,date:str = gettim
     """
     #生成标签的文本
     tags_text = "tags: "
+    tags,categories = jiexi_request(tags=tags,categories=categories)
     for x in tags:
         tags_text = tags_text + "\n- " + x 
     if type(categories) == type(list()):
@@ -79,10 +80,11 @@ def jiexi_request(tags,categories):
     """ 
     tags_list = re.findall(r"'([^']*)'", tags, flags=0)
     if len(tags_list) == 0: 
-        tags_list = tags.sqlit(",")
+        tags_list = tags.split(",")
     categories_list = re.findall(r"'([^']*)'", categories, flags=0)
     if len(categories_list) == 0:
         categories_list = categories.split(",")
+    return tags_list,categories_list
 def jiexitext_myself(path):
     """
     解析一篇文章
