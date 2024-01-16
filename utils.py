@@ -10,6 +10,8 @@ import subprocess
 import datetime
 import os
 import yaml
+import json
+import re
 def gettime():
     return  datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 def get_middle_text(text, start_marker, end_marker):
@@ -25,7 +27,7 @@ def get_middle_text(text, start_marker, end_marker):
     
     middle_text = text[start_index:end_index]
     return middle_text.lstrip()
-def creat_page(path:str,title:str, tags:list, categories:list,date:str = gettime(),posts :str = "post",text_content:str = ""):
+def create_page(path:str,title:str, tags:list, categories:list,date:str = gettime(),posts :str = "post",text_content:str = ""):
     """
     创建一篇新的文章
     :param path hexo项目的根目录
@@ -40,10 +42,13 @@ def creat_page(path:str,title:str, tags:list, categories:list,date:str = gettime
     tags_text = "tags: "
     for x in tags:
         tags_text = tags_text + "\n- " + x 
-    categories_text = "categories: ["
-    for y in categories:
-        categories_text = categories_text + y + ","
-    categories_text += "]"
+    if type(categories) == type(list()):
+
+        categories_text = "categories: ["
+        for y in categories:
+            categories_text = categories_text + f"{y}" + ","
+        categories_text += "]"
+    else: categories_text = f"categories: [\"{categories}\"]"
     content = f"""---
 title: {title}
 date: {date}
@@ -51,15 +56,33 @@ date: {date}
 {categories_text}
 ---
 """
+
+    logger.debug(text_content)
     os.chdir(path=path)
-    stdoutput = subprocess.Popen(["hexo","new",posts,title],stdout=subprocess.PIPE).communicate()[0] #生成hexo文章文件
-    if os.path.exists((n := (path + r"/source/_" + post + "s/" + title + ".md"))) == True:
-        return "文件已存在"
-    with open(n,encoding="utf8",mode="w") as f :
-        f.write(content + text_content)
-    if "INFO  Validating config\nINFO  Created:" in stdoutput:
-        return "Successd"
     
+    if os.path.exists((n := (path + r"/source/_" + posts + "s/" + title + ".md"))) == True:
+        return "文件已存在"
+    stdoutput = subprocess.Popen(["hexo","new",posts,title],stdout=subprocess.PIPE).communicate()[0] #生成hexo文章文件
+    logger.debug(f"{content}:{type(content)} , {text_content}:{type(text_content)}")
+    try:
+        with open(n,encoding="utf8",mode="w") as f :
+            f.write(content + text_content)
+    except Exception as e: 
+        logger.error(e)
+        os.remove(n)
+        return "文件创建失败，原因：" + e
+    if "INFO  Validating config\nINFO  Created:" in stdoutput.decode():
+        return "Successd"
+def jiexi_request(tags,categories):
+    """
+    解析请求体，由于模块请求的特殊，需要解析
+    """ 
+    tags_list = re.findall(r"'([^']*)'", tags, flags=0)
+    if len(tags_list) == 0: 
+        tags_list = tags.sqlit(",")
+    categories_list = re.findall(r"'([^']*)'", categories, flags=0)
+    if len(categories_list) == 0:
+        categories_list = categories.split(",")
 def jiexitext_myself(path):
     """
     解析一篇文章
@@ -191,3 +214,10 @@ def update_head(path,head : dict):
     with open(path,mode="w",encoding="utf8") as f:
         f.write(res)
     return "Sucess"
+def get_config():
+    if os.path.exists("./config.json") != True: 
+        return {"code":404}
+    with open("./config.json",mode="r",encoding="utf8") as f: 
+        configs = json.loads(f.read())
+        configs["code"] = 200
+    return configs
