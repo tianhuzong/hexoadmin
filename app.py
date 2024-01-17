@@ -23,7 +23,18 @@ def index():
     """
     return "Hi"
     return render_template("index.html")
-
+@app.route("/init",methods=["POST"])
+def init(): 
+    """
+    初始化函数，创建配置文件
+    """
+    if os.path.exists(configpath := "./config.json") != True: 
+        path = request.form.get("path")
+        config = json.dumps({"path":path})
+        with open(configpath,mode="w",encoding="utf8") as f: 
+            f.write(config)
+        return json.dumps({"code":200,"msg":"初始化成功"})
+    else : return json.dumps({"code":403,"msg":"配置文件已存在"})
 @app.route("/create_page",methods=["POST"])
 def createpage():
     """
