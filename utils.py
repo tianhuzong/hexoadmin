@@ -12,6 +12,7 @@ import os
 import yaml
 import json
 import re
+import hashlib
 def gettime():
     return  datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 def get_middle_text(text, start_marker, end_marker):
@@ -223,3 +224,28 @@ def get_config():
         configs = json.loads(f.read())
         configs["code"] = 200
     return configs
+def json2pathValue(json_object):
+    json_dict = json.loads(json_object)
+    key_list = sorted(list(json_dict.keys()))
+    result = []
+    for key in key_list:
+        value = json_dict[key]
+        if value is None or value == "":
+            result.append(f"{key}=")
+        else:
+            result.append(f"{key}={value}")
+    return "&".join(result).replace("'",'"').replace(" ","")
+def md5(str):
+    return hashlib.md5(str.encode(encoding='UTF-8')).hexdigest()
+def verify_sign(sign,data,APIkey):
+    """
+    sign签名验证
+    :param sign sign的签名
+    :param data 被签名的数据,json字符串,不包含APIkey
+    :param APIkey 
+    :return bool,签名合法为True,不合法为False
+    """
+    sign_1 = md5(json2pathValue(data)+"&APIkey="+APIkey) #本地计算的sign签名
+    if sign_1 == sign: 
+        return True
+    else : return False
