@@ -37,7 +37,7 @@ def init():
     APIkey = data.get("APIkey")
     if verify_sign(sign,data,APIkey) == False: 
         data = {"msg":"签名不合法"}
-        return json.dumps({"code":0,"data":data,"sign":md5(json2pathValue(json.dumps(data) + "&APIkey="+APIkey))})
+        return json.dumps({"code":401,"data":data,"sign":md5(json2pathValue(json.dumps(data) + "&APIkey="+APIkey))})
     if os.path.exists(configpath := "./config.json") != True: 
         
         config = json.dumps({"path":path,"APIkey":APIkey})
