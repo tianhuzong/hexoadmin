@@ -38,6 +38,9 @@ def init():
     logger.debug(json.dumps(data))
     path = data.get("path")
     APIkey = data.get("APIkey")
+    if sign == None: 
+        data = {"msg":"签名不存在"}
+        return json.dumps({"code":400,"data":data,"sign":md5(json2pathValue(json.dumps(data))+"&APIkey=")}) , 400
     if verify_sign(sign,json.dumps(data),APIkey) == False: 
         data = {"msg":"签名不合法"}
         return json.dumps({"code":400,"data":data,"sign":md5(json2pathValue(json.dumps(data)) + "&APIkey="+APIkey)}),400
@@ -57,26 +60,26 @@ def createpage():
     """
     创建文章
     """
-    logger.debug(dir(request))
     configs = get_config()
+    request_data = request.json
     if configs.get("code") == 404:
         data = {"msg":"配置文件不存在，请进行初始化"}
         return json.dumps({"code" : 404,"data":data,"sign":md5(json2pathValue(json.dumps(data))+"&APIkey=")}),404
-    if verify_sign(sign,json.dumps(data),configs["APIkey"]) == False: 
+    elif request_data.get("sign") == None : 
+        data = {"msg":"签名不存在"}
+        return json.dumps({"code":400,"data":data,"sign":md5(json2pathValue(json,dumps(data))+"&APIkey=")}) , 400
+    elif verify_sign(request_data.get("sign"),json.dumps(request_data.get("data")),configs["APIkey"]) == False: 
+        logger.debug(f'{request_data.get("sign")},{json.dumps(request_data.get("data"))},{configs["APIkey"]}')
         data = {"msg":"签名不合法"}
         return json.dumps({"code":400,"data":data,"sign":md5(json2pathValue(json.dumps(data)) + "&APIkey="+configs["APIkey"])}),400
 
-    post = request.form.get("post")
-    title = request.form.get("title")
-    if (date := request.form.get("date")) == None:
+    post = request.json.get("data").get("post")
+    title = request.json.get("data").get("title")
+    if (date := request.json.get("data").get("date")) == None:
         date = gettime()
-    logger.debug(request.method)
-    logger.debug(request.form)
-    tags = request.form.get("tags")
-    logger.debug(tags)
-    categories = request.form.get("categories")
-    logger.debug(categories)
-    content = request.form.get("content")
+    tags = request.json.get("data").get("tags")
+    categories = request.json.get("data").get("categories")
+    content = request.json.get("data").get("content")
     
 
     if content == None: 
@@ -88,7 +91,37 @@ def createpage():
     else: 
         data = {"msg":res}
         return json.dumps({"code":500,"data":data,"sign":md5(json2pathValue(json.dumps(data)) + "&APIkey=" + configs["APIkey"])}),500
-
+@app.route("/page_list/<int:page_size>/<int:page_number>",methods=["GET"])
+@logger.catch
+def get_page_list(page_size,page_number): 
+    """
+    获取文章列表
+    """
+    configs = get_config()
+    logger.debug(request.view_args)
+    request_data = request.view_args.copy()
+    sign = request.args.get("sign")
+    try:
+        del request_data["sign"]
+    except KeyError as e: 
+        pass 
+    if configs.get("code") == 404:
+        data = {"msg":"配置文件不存在，请进行初始化"}
+        return json.dumps({"code" : 404,"data":data,"sign":md5(json2pathValue(json.dumps(data))+"&APIkey=")}),404
+    elif sign == None : 
+        data = {"msg":"签名不存在"}
+        return json.dumps({"code":400,"data":data,"sign":md5(json2pathValue(json.dumps(data))+"&APIkey=")}) , 400
+    elif verify_sign(sign,json.dumps(request_data),configs["APIkey"]) == False: 
+        data = {"msg":"签名不合法"}
+        return json.dumps({"code":400,"data":data,"sign":md5(json2pathValue(json.dumps(data)) + "&APIkey="+configs["APIkey"])}),400
+    try: 
+        plist , pages = page_list(configs["path"]+"/source",page_size,page_number)
+    except ValueError as e: 
+        logger.error(f"捕获到一个错误：{e.args[0]}" )
+        data = {"msg":e.args[0]}
+        return json.dumps({"code":422,"data":data,"sign":md5(json2pathValue(json.dumps(data)) + "&APIkey="+configs["APIkey"])}),422
+    data = {"msg":"Sucessd!","list":plist,"page_nums":pages}
+    return json.dumps({"code":200,"data":data,"sign":md5(json2pathValue(json.dumps(data)) + "&APIkey=" + configs["APIkey"])}) , 200
 if __name__ == "__main__":
     logger.add("logs/{time:YYYY-MM-DD}.log",encoding="utf8",enqueue=True,rotation="00:00",level="DEBUG")
     app.run(host="0.0.0.0",port="5000")

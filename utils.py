@@ -41,16 +41,13 @@ def create_page(path:str,title:str, tags:list, categories:list,date:str = gettim
     """
     #生成标签的文本
     tags_text = "tags: "
-    tags,categories = jiexi_request(tags=tags,categories=categories)
     for x in tags:
         tags_text = tags_text + "\n- " + x 
-    if type(categories) == type(list()):
-
-        categories_text = "categories: ["
-        for y in categories:
-            categories_text = categories_text + f"{y}" + ","
-        categories_text += "]"
-    else: categories_text = f"categories: [\"{categories}\"]"
+    categories_text = "categories: ["
+    for y in categories:
+        categories_text = categories_text + f"{y}" + ","
+    categories_text += "]"
+    
     content = f"""---
 title: {title}
 date: {date}
@@ -60,11 +57,11 @@ date: {date}
 """
 
     logger.debug(text_content)
-    os.chdir(path=path)
+    #os.chdir(path=path)
     
     if os.path.exists((n := (path + r"/source/_" + posts + "s/" + title + ".md"))) == True:
         return "文件已存在"
-    stdoutput = subprocess.Popen(["hexo","new",posts,title],stdout=subprocess.PIPE).communicate()[0] #生成hexo文章文件
+    stdoutput = subprocess.Popen(["cd",path," && ","hexo","new",posts,title],stdout=subprocess.PIPE).communicate()[0] #生成hexo文章文件
     logger.debug(f"{content}:{type(content)} , {text_content}:{type(text_content)}")
     try:
         with open(n,encoding="utf8",mode="w") as f :
@@ -75,6 +72,8 @@ date: {date}
         return "文件创建失败，原因：" + e
     if "INFO  Validating config\nINFO  Created:" in stdoutput.decode():
         return "Successd"
+
+#废弃
 def jiexi_request(tags,categories):
     """
     解析请求体，由于模块请求的特殊，需要解析
@@ -190,6 +189,7 @@ def dict_to_md(blog_data, content):
     reversed_content = f'---\n{yaml_str}\n---\n{original_md_content}'
     return reversed_content
 
+
 def update_page(path,text_content):
     """
     更新文章内容，不需要编写文章头部内容
@@ -217,6 +217,50 @@ def update_head(path,head : dict):
     with open(path,mode="w",encoding="utf8") as f:
         f.write(res)
     return "Sucess"
+
+def page_list(path,page_size,page_number): 
+    """
+    获取文章列表
+    :param path source目录的绝对路径
+    :type str
+    :param page_size
+    :return 返回文章的列表
+    :type list
+    """
+    file_list = []
+    
+    # 遍历目录中的所有文件和文件夹
+    for root, dirs, files in os.walk(path):
+        # 遍历当前目录中的文件
+        for file_name in files:
+            # 将文件的完整路径加入到列表中
+            file_list.append(os.path.join(root, file_name))
+    
+    # 计算文件列表的总页数
+    total_pages = (len(file_list) + page_size - 1) // page_size
+    
+    # 验证页码是否超过最大页数
+    if page_number > total_pages:
+        raise ValueError("获取的页码已经超过最大页数")
+    
+    # 根据指定的页码和每页数量计算分页范围
+    start_index = (page_number - 1) * page_size
+    end_index = start_index + page_size
+    
+    # 对文件列表进行分页处理
+    paginated_list = file_list[start_index:end_index]
+    
+    return paginated_list, total_pages
+
+def get_tags_list():
+    """
+    获取标签列表
+    :param page_size
+    :type int
+    :param page_num 获取第几页
+    :return 返回一个列表和总页数
+    """
+
 def get_config():
     if os.path.exists("./config.json") != True: 
         return {"code":404}
