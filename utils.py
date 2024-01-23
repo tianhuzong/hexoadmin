@@ -58,18 +58,38 @@ date: {date}
 
     logger.debug(text_content)
     #os.chdir(path=path)
-    
-    if os.path.exists((n := (path + r"/source/_" + posts + "s/" + title + ".md"))) == True:
-        return "文件已存在"
+    if posts in ["post","draft"]:
+        if (os.path.exists(path + r"/source/_posts/" + title + ".md") == True) or (os.path.exists(path + "/source/_drafts/" + title + ".md") == True):
+            return "文件已存在"
+        else: 
+            workpath = os.getcwd()
+            os.chdir(path)
+            stdoutput = subprocess.Popen(["hexo","new",posts,title],stdout=subprocess.PIPE).communicate()[0] #生成hexo文章文件
+            os.chdir(workpath)
+            try:
+                with open((path + r"/source/_" + posts + "s/" + title + ".md"),encoding="utf8",mode="w") as f :
+                    f.write(content + text_content)
+            except Exception as e: 
+                logger.error(e)
+                os.remove(n)
+                return "文件创建失败，原因：" + e.args[0]
+    elif posts == "page":
+        """对页面进行查重"""
+        if os.path.exists(path + "/source/" + title) == True : 
+            return "页面已存在"
+        else: 
+            workpath = os.getcwd()
+            os.chdir(path)
+            stdoutput = subprocess.Popen(["hexo","new",posts,title],stdout=subprocess.PIPE).communicate()[0] #生成hexo文章文件
+            os.chdir(workpath)
+            try:
+                with open((path + r"/source/" +  title + "/index.md"),encoding="utf8",mode="w") as f :
+                    f.write(content + text_content)
+            except Exception as e: 
+                logger.error(e)
+                os.remove(n)
+                return "文件创建失败，原因：" + e.args[0]
     stdoutput = subprocess.Popen(["cd",path," && ","hexo","new",posts,title],stdout=subprocess.PIPE).communicate()[0] #生成hexo文章文件
-    logger.debug(f"{content}:{type(content)} , {text_content}:{type(text_content)}")
-    try:
-        with open(n,encoding="utf8",mode="w") as f :
-            f.write(content + text_content)
-    except Exception as e: 
-        logger.error(e)
-        os.remove(n)
-        return "文件创建失败，原因：" + e
     if "INFO  Validating config\nINFO  Created:" in stdoutput.decode():
         return "Successd"
 
@@ -252,7 +272,7 @@ def page_list(path,page_size,page_number):
     
     return paginated_list, total_pages
 
-def get_tags_list():
+def get_tags_list(page_size):
     """
     获取标签列表
     :param page_size
