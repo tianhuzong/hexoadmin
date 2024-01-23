@@ -62,10 +62,10 @@ date: {date}
         if (os.path.exists(path + r"/source/_posts/" + title + ".md") == True) or (os.path.exists(path + "/source/_drafts/" + title + ".md") == True):
             return "文件已存在"
         else: 
-            workpath = os.getcwd()
-            os.chdir(path)
-            stdoutput = subprocess.Popen(["hexo","new",posts,title],stdout=subprocess.PIPE).communicate()[0] #生成hexo文章文件
-            os.chdir(workpath)
+            #workpath = os.getcwd()
+            #os.chdir(path)
+            stdoutput = subprocess.Popen(f"cd {path} && hexo new {posts} {title}",stdout=subprocess.PIPE,shell=True).communicate()[0] #生成hexo文章文件            
+            #os.chdir(workpath)
             try:
                 with open((path + r"/source/_" + posts + "s/" + title + ".md"),encoding="utf8",mode="w") as f :
                     f.write(content + text_content)
@@ -78,10 +78,10 @@ date: {date}
         if os.path.exists(path + "/source/" + title) == True : 
             return "页面已存在"
         else: 
-            workpath = os.getcwd()
-            os.chdir(path)
-            stdoutput = subprocess.Popen(["hexo","new",posts,title],stdout=subprocess.PIPE).communicate()[0] #生成hexo文章文件
-            os.chdir(workpath)
+            #workpath = os.getcwd()
+            #os.chdir(path)
+            stdoutput = subprocess.Popen(f"cd {path} && hexo new {posts} {title}",stdout=subprocess.PIPE,shell=True).communicate()[0] #生成hexo文章文件
+            #os.chdir(workpath)
             try:
                 with open((path + r"/source/" +  title + "/index.md"),encoding="utf8",mode="w") as f :
                     f.write(content + text_content)
@@ -89,7 +89,6 @@ date: {date}
                 logger.error(e)
                 os.remove(n)
                 return "文件创建失败，原因：" + e.args[0]
-    stdoutput = subprocess.Popen(["cd",path," && ","hexo","new",posts,title],stdout=subprocess.PIPE).communicate()[0] #生成hexo文章文件
     if "INFO  Validating config\nINFO  Created:" in stdoutput.decode():
         return "Successd"
 
