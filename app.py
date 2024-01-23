@@ -85,7 +85,7 @@ def createpage():
     if content == None: 
         content = ""
     res = create_page(configs["path"],title,tags,categories,date,post,content)
-    if res == "Successd":
+    if res == "Succeeded":
         data = {"msg":"文章创建成功"}
         return json.dumps({"code":200,"data":data,"sign":md5(json2pathValue(json.dumps(data)) + "&APIkey=" + configs["APIkey"])}),200
     else: 
@@ -122,6 +122,72 @@ def get_page_list(page_size,page_number):
         return json.dumps({"code":422,"data":data,"sign":md5(json2pathValue(json.dumps(data)) + "&APIkey="+configs["APIkey"])}),422
     data = {"msg":"Sucessd!","list":plist,"page_nums":pages}
     return json.dumps({"code":200,"data":data,"sign":md5(json2pathValue(json.dumps(data)) + "&APIkey=" + configs["APIkey"])}) , 200
+@app.route("/update_head",methods=["PUT"])
+@logger.catch
+def update_head_view():
+    """
+    更新文章头部的函数
+    """
+    configs = get_config()
+    request_data = request.json
+    if configs.get("code") == 404:
+        data = {"msg":"配置文件不存在，请进行初始化"}
+        return json.dumps({"code" : 404,"data":data,"sign":md5(json2pathValue(json.dumps(data))+"&APIkey=")}),404
+    elif request_data.get("sign") == None : 
+        data = {"msg":"签名不存在"}
+        return json.dumps({"code":400,"data":data,"sign":md5(json2pathValue(json,dumps(data))+"&APIkey=")}) , 400
+    elif verify_sign(request_data.get("sign"),json.dumps(request_data.get("data")),configs["APIkey"]) == False: 
+        logger.debug(f'{request_data.get("sign")},{json.dumps(request_data.get("data"))},{configs["APIkey"]}')
+        data = {"msg":"签名不合法"}
+        return json.dumps({"code":400,"data":data,"sign":md5(json2pathValue(json.dumps(data)) + "&APIkey="+configs["APIkey"])}),400
+    title = request.json.get("data").get("title")
+    if (date := request.json.get("data").get("date")) == None:
+        date = gettime()
+    tags = request.json.get("data").get("tags")
+    categories = request.json.get("data").get("categories")
+    path = request.json.get("data").get("path")
+    if os.path.exists(path) != True :
+        data = {"msg":"文件不存在"}
+        return json.dumps({"code":500,"data":data,"sign":md5(json2pathValue(json.dumps(data))+"&APIkey="+configs["APIkey"])}) , 500
+    head_ls = jiexitext(path)[0]
+    head_ls["tags"] = tags  
+    head_ls["categories"] = categories 
+    head_ls["date"] = date
+    if (result := update_head(path,head_ls)) == "Succeeded":
+        data = {"msg" : "头部更新成功"}
+        return json.dumps({"code":200,"data":data,"sign":md5(json2pathValue(json.dumps(data))+"&APIkey="+configs["APIkey"])}) , 200
+    else: 
+        data = {"msg":result}
+        return json.dumps({"code":500,"data":data,"sign":md5(json2pathValue(json.dumps(data))+"&APIkey="+configs["APIkey"])}) , 500
+@app.route("/update_page",methods=["PUT"])
+@logger.catch
+def update_page_view():
+    """
+    更新文章头部的函数
+    """
+    configs = get_config()
+    request_data = request.json
+    if configs.get("code") == 404:
+        data = {"msg":"配置文件不存在，请进行初始化"}
+        return json.dumps({"code" : 404,"data":data,"sign":md5(json2pathValue(json.dumps(data))+"&APIkey=")}),404
+    elif request_data.get("sign") == None : 
+        data = {"msg":"签名不存在"}
+        return json.dumps({"code":400,"data":data,"sign":md5(json2pathValue(json,dumps(data))+"&APIkey=")}) , 400
+    elif verify_sign(request_data.get("sign"),json.dumps(request_data.get("data")),configs["APIkey"]) == False: 
+        logger.debug(f'{request_data.get("sign")},{json.dumps(request_data.get("data"))},{configs["APIkey"]}')
+        data = {"msg":"签名不合法"}
+        return json.dumps({"code":400,"data":data,"sign":md5(json2pathValue(json.dumps(data)) + "&APIkey="+configs["APIkey"])}),400
+    content = request_data.get("content")
+    path = request.json.get("data").get("path")
+    if os.path.exists(path) != True :
+        data = {"msg":"文件不存在"}
+        return json.dumps({"code":500,"data":data,"sign":md5(json2pathValue(json.dumps(data))+"&APIkey="+configs["APIkey"])}) , 500
+    if (result := update_page(path,content)) == "Succeeded":
+        data = {"msg" : "文章内容更新成功更新成功"}
+        return json.dumps({"code":200,"data":data,"sign":md5(json2pathValue(json.dumps(data))+"&APIkey="+configs["APIkey"])}) , 200
+    else: 
+        data = {"msg":result}
+        return json.dumps({"code":500,"data":data,"sign":md5(json2pathValue(json.dumps(data))+"&APIkey="+configs["APIkey"])}) , 500
 if __name__ == "__main__":
     logger.add("logs/{time:YYYY-MM-DD}.log",encoding="utf8",enqueue=True,rotation="00:00",level="DEBUG")
     app.run(host="0.0.0.0",port="5000")

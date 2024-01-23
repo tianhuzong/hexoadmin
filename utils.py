@@ -165,7 +165,12 @@ def jiexitext_myself(path):
 原文链接：https://blog.csdn.net/fullbug/article/details/126007706
 """
 
-def jiexitext(blog_md_file) -> tuple:
+def jiexitext(blog_md_file)->tuple:
+    """
+    网上抄的函数
+    :param blog_md_file 博客文件
+    :return 返回一个元组,第一个元素是head 第二个元素是content
+    """
     #读md文件
     md_f = open(blog_md_file, "r",encoding='utf-8')
     md_f_str=md_f.read()
@@ -222,7 +227,7 @@ def update_page(path,text_content):
         return "文件不存在"
     with open(path,mode="w+",encoding="utf8") as f:
         f.write(text)
-    return "Successd"
+    return "Succeeded"
 def update_head(path,head : dict):
     """
     更新文章头部的yaml配置
@@ -232,10 +237,10 @@ def update_head(path,head : dict):
     if os.path.exists(path) != True:
         return "文件不存在"
     text_jiexi = jiexitext(path)
-    res = dict_to_md(head,jiexitext[1])
+    res = dict_to_md(head,text_jiexi[1])
     with open(path,mode="w",encoding="utf8") as f:
         f.write(res)
-    return "Sucess"
+    return "Succeeded"
 
 def page_list(path,page_size,page_number): 
     """
