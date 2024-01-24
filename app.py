@@ -122,6 +122,37 @@ def get_page_list(page_size,page_number):
         return json.dumps({"code":422,"data":data,"sign":md5(json2pathValue(json.dumps(data)) + "&APIkey="+configs["APIkey"])}),422
     data = {"msg":"Sucessd!","list":plist,"page_nums":pages}
     return json.dumps({"code":200,"data":data,"sign":md5(json2pathValue(json.dumps(data)) + "&APIkey=" + configs["APIkey"])}) , 200
+@app.route("/page_list_a/<int:page_size>/<int:page_number>",methods=["GET"])
+@logger.catch
+def get_page_list_a(page_size,page_number): 
+    """
+    获取文章列表版本2
+    """
+    configs = get_config()
+    logger.debug(request.view_args)
+    request_data = request.view_args.copy()
+    sign = request.args.get("sign")
+    try:
+        del request_data["sign"]
+    except KeyError as e: 
+        pass 
+    if configs.get("code") == 404:
+        data = {"msg":"配置文件不存在，请进行初始化"}
+        return json.dumps({"code" : 404,"data":data,"sign":md5(json2pathValue(json.dumps(data))+"&APIkey=")}),404
+    elif sign == None : 
+        data = {"msg":"签名不存在"}
+        return json.dumps({"code":400,"data":data,"sign":md5(json2pathValue(json.dumps(data))+"&APIkey=")}) , 400
+    elif verify_sign(sign,json.dumps(request_data),configs["APIkey"]) == False: 
+        data = {"msg":"签名不合法"}
+        return json.dumps({"code":400,"data":data,"sign":md5(json2pathValue(json.dumps(data)) + "&APIkey="+configs["APIkey"])}),400
+    try: 
+        plist , pages = page_list(configs["path"]+"/source",page_size,page_number)
+    except ValueError as e: 
+        logger.error(f"捕获到一个错误：{e.args[0]}" )
+        data = {"msg":e.args[0]}
+        return json.dumps({"code":422,"data":data,"sign":md5(json2pathValue(json.dumps(data)) + "&APIkey="+configs["APIkey"])}),422
+    data = {"msg":"Sucessd!","list":plist,"page_nums":pages}
+    return json.dumps({"code":200,"data":data,"sign":md5(json2pathValue(json.dumps(data)) + "&APIkey=" + configs["APIkey"])}) , 200
 @app.route("/update_head",methods=["PUT"])
 @logger.catch
 def update_head_view():

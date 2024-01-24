@@ -247,9 +247,9 @@ def page_list(path,page_size,page_number):
     获取文章列表
     :param path source目录的绝对路径
     :type str
-    :param page_size
-    :return 返回文章的列表
-    :type list
+    :param page_size 分页的每页条数
+    :param page_number 第几页
+    :return 返回文章列表和最大页码数
     """
     file_list = []
     
@@ -275,7 +275,25 @@ def page_list(path,page_size,page_number):
     paginated_list = file_list[start_index:end_index]
     
     return paginated_list, total_pages
-
+def page_list_a(path,part,page_size,page_num):
+    """
+    获取文章列表版本2,增加了part参数,为文章类型分类
+    :param path source目录的绝对路径
+    :param part 选填 post(普通文章) draft(草稿) page(页面)
+    :param page_size 分页的每页条数
+    :param page_num 第几页
+    """
+    if part not in ["post","draft","page"]:
+        raise ValueError("part参数只能选填post,draft,page")
+    elif part == "page":
+        """
+        获取source下除了_posts和_drafts的目录列表
+        """
+        all_dir = os.listdir(path)
+        del all_dir[all_dir.index("_posts")]
+        del all_dir[all_dir.index("_drafts")]
+        
+        
 def get_tags_list(page_size):
     """
     获取标签列表
