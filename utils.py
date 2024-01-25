@@ -251,6 +251,9 @@ def page_list(path,page_size,page_number):
     :param page_number 第几页
     :return 返回文章列表和最大页码数
     """
+    #参数类型检测
+    if (type(page_size) != type(int())) or (type(page_number) != type(int())):
+        raise TypeError("page_size和page_number必须都是整数型")
     file_list = []
     
     # 遍历目录中的所有文件和文件夹
@@ -283,6 +286,9 @@ def page_list_a(path,part,page_size,page_num):
     :param page_size 分页的每页条数
     :param page_num 第几页
     """
+    #参数类型检测
+    if (type(page_size) != type(int())) or (type(page_num) != type(int())):
+        raise TypeError("page_size和page_number必须都是整数型")
     if part not in ["post","draft","page"]:
         raise ValueError("part参数只能选填post,draft,page")
     elif part == "page":
@@ -290,8 +296,23 @@ def page_list_a(path,part,page_size,page_num):
         获取source下除了_posts和_drafts的目录列表
         """
         all_dir = os.listdir(path)
-        del all_dir[all_dir.index("_posts")]
-        del all_dir[all_dir.index("_drafts")]
+        all_dir.remove("_posts")
+        all_dir.remove("_drafts")
+        all_paths = [(os.path.join(path, x) + "/index.md") for x in all_dir]
+        max_page_num = (len(all_paths) + page_size - 1) // page_size #计算最大页数
+        if page_num > max_page_num:
+            raise ValueError("获取的页码已经超过最大页数")
+            # 根据指定的页码和每页数量计算分页范围
+        start_index = (page_num - 1) * page_size
+        end_index = start_index + page_size
+    
+        # 对文件列表进行分页处理
+        paginated_list = all_paths[start_index:end_index]
+        return paginated_list,max_page_num
+    else: 
+        """获取_posts和_drafts目录下的文章"""
+        page_lists,max_page_num = page_list(os.path.join(path,f"_{part}s"),page_size,page_num)
+        return page_lists,max_page_num
         
         
 def get_tags_list(page_size):

@@ -116,15 +116,15 @@ def get_page_list(page_size,page_number):
         return json.dumps({"code":400,"data":data,"sign":md5(json2pathValue(json.dumps(data)) + "&APIkey="+configs["APIkey"])}),400
     try: 
         plist , pages = page_list(configs["path"]+"/source",page_size,page_number)
-    except ValueError as e: 
+    except Exception as e: 
         logger.error(f"捕获到一个错误：{e.args[0]}" )
         data = {"msg":e.args[0]}
         return json.dumps({"code":422,"data":data,"sign":md5(json2pathValue(json.dumps(data)) + "&APIkey="+configs["APIkey"])}),422
     data = {"msg":"Sucessd!","list":plist,"page_nums":pages}
     return json.dumps({"code":200,"data":data,"sign":md5(json2pathValue(json.dumps(data)) + "&APIkey=" + configs["APIkey"])}) , 200
-@app.route("/page_list_a/<int:page_size>/<int:page_number>",methods=["GET"])
+@app.route("/page_list_a/<part>/<int:page_size>/<int:page_number>",methods=["GET"])
 @logger.catch
-def get_page_list_a(page_size,page_number): 
+def get_page_list_a(part,page_size,page_number): 
     """
     获取文章列表版本2
     """
@@ -146,8 +146,8 @@ def get_page_list_a(page_size,page_number):
         data = {"msg":"签名不合法"}
         return json.dumps({"code":400,"data":data,"sign":md5(json2pathValue(json.dumps(data)) + "&APIkey="+configs["APIkey"])}),400
     try: 
-        plist , pages = page_list(configs["path"]+"/source",page_size,page_number)
-    except ValueError as e: 
+        plist , pages = page_list_a(configs["path"]+"/source",part,page_size,page_number)
+    except Exception as e: 
         logger.error(f"捕获到一个错误：{e.args[0]}" )
         data = {"msg":e.args[0]}
         return json.dumps({"code":422,"data":data,"sign":md5(json2pathValue(json.dumps(data)) + "&APIkey="+configs["APIkey"])}),422
