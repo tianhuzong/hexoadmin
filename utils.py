@@ -315,7 +315,7 @@ def page_list_a(path,part,page_size,page_num):
         return page_lists,max_page_num
         
         
-def get_tags_list(page_size):
+def get_tags_list(page_size,page_num):
     """
     获取标签列表
     :param page_size
@@ -323,6 +323,21 @@ def get_tags_list(page_size):
     :param page_num 获取第几页
     :return 返回一个列表和总页数
     """
+    configs = get_config()
+    cmd = f"cd {configs['path']} && hexo list tag"
+    stdout = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE).communicate()[0].decode() 
+    tags_line = stdout[stdout.find("Path")+4:].strip().split("\n")
+    tags = []
+    for x in range(len(tags_line)):
+        tags.append(tags_line[x].split()[0])
+    max_page_num = (len(tags) + page_size - 1) // page_size #计算最大页数
+    if page_num > max_page_num:
+        raise ValueError("获取的页码已经超过最大页数")
+    start_index = (page_num - 1) * page_size
+    end_index = start_index + page_size
+    return tags[start_index:end_index] , max_page_num
+    
+    
 
 def get_config():
     if os.path.exists("./config.json") != True: 
