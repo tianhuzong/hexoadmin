@@ -222,6 +222,7 @@ def update_page_view():
 @app.route("/tags_list/<int:page_size>/<int:page_num>",methods=["GET"])
 @logger.catch
 def tag_list(page_size,page_num):
+
     """
     获取标签列表
     """
@@ -250,6 +251,44 @@ def tag_list(page_size,page_num):
         return json.dumps({"code":422,"data":data,"sign":md5(json2pathValue(json.dumps(data)) + "&APIkey="+configs["APIkey"])}),422
     data = {"msg":"Sucessd!","list":tagslist,"page_nums":tags}
     return json.dumps({"code":200,"data":data,"sign":md5(json2pathValue(json.dumps(data)) + "&APIkey=" + configs["APIkey"])}) , 200
+@app.route("/get_text_content")
+@logger.catch
+def text_contents():
+    
+    #获取标签列表
+    
+    request_data = dict(request.args)
+    logger.debug(request_data)
+    configs = get_config()
+    sign = request.args.get("sign")
+    path = request_data.get("path")
+    try:
+        del request_data["sign"]
+    except KeyError as e: 
+        pass 
+    logger.debug(request_data)
+    if configs.get("code") == 404:
+        data = {"msg":"配置文件不存在，请进行初始化"}
+        return json.dumps({"code" : 404,"data":data,"sign":md5(json2pathValue(json.dumps(data))+"&APIkey=")}),404
+    elif sign == None : 
+        data = {"msg":"签名不存在"}
+        return json.dumps({"code":400,"data":data,"sign":md5(json2pathValue(json.dumps(data))+"&APIkey=")}) , 400
+    elif verify_sign(sign,json.dumps(request_data),configs["APIkey"]) == False: 
+        data = {"msg":"签名不合法"}
+        return json.dumps({"code":400,"data":data,"sign":md5(json2pathValue(json.dumps(data)) + "&APIkey="+configs["APIkey"])}),400
+    try: 
+        head , content = get_text_content(path)
+    except yaml.scanner.ScannerError as e: 
+        logger.error("错误:传入的文件并不合法")
+        data = {"msg":"非法的文件"}
+        return json.dumps({"code":422,"data":data,"sign":md5(json2pathValue(json.dumps(data)) + "&APIkey="+configs["APIkey"])}),422
+    except Exception as e: 
+        logger.error(f"捕获到一个错误：{e.args[0]}" )
+        data = {"msg":e.args[0]}
+        return json.dumps({"code":422,"data":data,"sign":md5(json2pathValue(json.dumps(data)) + "&APIkey="+configs["APIkey"])}),422
+    data = {"msg":"Sucessd!","head":head,"content":content}
+    return json.dumps({"code":200,"data":data,"sign":md5(json2pathValue(json.dumps(data)) + "&APIkey=" + configs["APIkey"])}) , 200
+
 if __name__ == "__main__":
     logger.add("logs/{time:YYYY-MM-DD}.log",encoding="utf8",enqueue=True,rotation="00:00",level="DEBUG")
     app.run(host="0.0.0.0",port="5000")

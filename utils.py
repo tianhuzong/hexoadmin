@@ -165,12 +165,14 @@ def jiexitext_myself(path):
 原文链接：https://blog.csdn.net/fullbug/article/details/126007706
 """
 
-def jiexitext(blog_md_file)->tuple:
+def jiexitext(blog_md_file):
     """
     网上抄的函数
     :param blog_md_file 博客文件
     :return 返回一个元组,第一个元素是head 第二个元素是content
     """
+    if(blog_md_file.split(".")[-1] != "md"):
+        raise ValueError("非法的文件")
     #读md文件
     md_f = open(blog_md_file, "r",encoding='utf-8')
     md_f_str=md_f.read()
@@ -336,6 +338,31 @@ def get_tags_list(page_size,page_num):
     start_index = (page_num - 1) * page_size
     end_index = start_index + page_size
     return tags[start_index:end_index] , max_page_num
+
+def is_file_in_directory(file_path, directory_path):
+    """
+    判断某个文件是否位于某个目录内
+    :param file_path 文件路径
+    :param directory_path 目录
+    :return 存在返回True 否则False
+    """
+    for root, dirs, files in os.walk(directory_path):
+        if file_path in files:
+            return True
+    return False
+
+def get_text_content(path):
+    """
+    获取文章内容
+    :param path 文章路径
+    :return 返回文章头部信息和正文内容
+    """
+    if os.path.exists(path) != True: 
+        raise FileNotFoundError("文件不存在")
+    if is_file_in_directory(path,os.path.join(get_config()["path"],"source")):
+        raise ValueError("非法的文件路径")
+    head,content = jiexitext(path)
+    return head,content
     
     
 
