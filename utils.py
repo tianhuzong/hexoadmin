@@ -387,6 +387,8 @@ def json2pathValue(json_object):
 def md5(str):
     return hashlib.md5(str.encode(encoding='UTF-8')).hexdigest()
 def verify_sign(sign,data,APIkey):
+
+
     """
     sign签名验证
     :param sign sign的签名
@@ -398,3 +400,14 @@ def verify_sign(sign,data,APIkey):
     if sign_1 == sign: 
         return True
     else : return False
+
+def getip(request):
+    """
+    获取客户端真实IP
+    """
+    if "X-Forwarded-For" in request.headers:
+        return request.headers.get("X-Forwarded-For").split(",")[0]
+    elif "HTTP_CLIENT_IP" in request.headers: 
+        return request.headers.get("HTTP_CLIENT_IP")
+    else: 
+        return request.remote_addr

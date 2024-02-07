@@ -16,6 +16,21 @@ app = Flask(__name__)
 
 #Flask函数
 
+#中间件,当有人访问时记录下来
+@app.before_request
+def beforerequest():
+    data = {"query":request.path,"method":request.method}
+    if request.method == "GET":
+        data["args"] = request.args.json
+    elif request.content_type == "application/json":
+        data["data"] = request.json  
+    data["Content-Type"] = request.content_type
+    data["headers"] = request.headers
+    data["ip"] = getip()
+    data["time"] = gettime()
+    logger.info(json.dumps(data))
+        
+
 @app.route("/")
 @logger.catch
 def index():
