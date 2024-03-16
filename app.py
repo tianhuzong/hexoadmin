@@ -21,11 +21,11 @@ app = Flask(__name__)
 def beforerequest():
     data = {"query":request.path,"method":request.method}
     if request.method == "GET":
-        data["args"] = request.args.json
+        data["args"] = request.args
     elif request.content_type == "application/json":
         data["data"] = request.json  
     data["Content-Type"] = request.content_type
-    data["headers"] = request.headers
+    data["headers"] = dict(request.headers.items())
     data["ip"] = getip()
     data["time"] = gettime()
     logger.info(json.dumps(data))
