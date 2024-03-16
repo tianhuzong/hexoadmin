@@ -26,7 +26,7 @@ def beforerequest():
         data["data"] = request.json  
     data["Content-Type"] = request.content_type
     data["headers"] = dict(request.headers.items())
-    data["ip"] = getip()
+    data["ip"] = getip(request)
     data["time"] = gettime()
     logger.info(json.dumps(data))
         
